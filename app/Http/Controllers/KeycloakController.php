@@ -7,13 +7,14 @@ use Illuminate\Support\Facades\Http;
 
 class KeycloakController extends Controller
 {
-    // Define URL for the redirection
+    // Define URL for the redirection.
     private function getKeycloakUrl($endpoint)
     {
+        // Url of api that will redirect.
         return env('KEYCLOAK_SERVER') . '/realms/' . env('KEYCLOAK_REALM') . '/protocol/openid-connect/' . $endpoint;
     }
 
-    // Define Params for the client
+    // Define Params for the client.
     private function getKeycloakParams($additionalParams = [])
     {
         return array_merge([
@@ -38,6 +39,7 @@ class KeycloakController extends Controller
         );
 
         try {
+            // Redirect to Keycloak URL
             $response = Http::asForm()->post($this->getKeycloakUrl('token'), $params);
 
             if ($response->failed()) {
@@ -48,6 +50,32 @@ class KeycloakController extends Controller
 
             return response()->json(['tokenData' => $response->json()]);
         } catch (\Exception $e) {
+            return response()->json(['message' => 'Internal server error'], 500);
+        }
+    }
+
+    // Get all user
+    public function getAllUsers(Request $request)
+    {
+        // Extract the Bearer token from the Authorization header
+        $token = $request->bearerToken();
+        
+        if (!$token) {
+            return response()->json(['message' => 'Authorization token not provided'], 401);
+        }
+
+        try {
+            // Query Keycloak for users
+            $response = Http::withToken($token)->get(env('KEYCLOAK_SERVER') .'/admin/realms/'. env('KEYCLOAK_REALM') . '/users');
+            
+            // Check if the response was successful
+            if (!$response->successful()){
+                return response()->json(['message' => 'Failed to fetch users'], $response->status());
+            }
+            return response()->json(['allUsers' => $response->json()]);
+            
+        } catch (\Exception $e) {
+            // Handle exceptions
             return response()->json(['message' => 'Internal server error'], 500);
         }
     }
@@ -80,6 +108,7 @@ class KeycloakController extends Controller
         }
     }
 
+    // Get user data
     public function introspect(Request $request)
     {
         $request->validate([
@@ -101,6 +130,7 @@ class KeycloakController extends Controller
         }
     }
 
+    // Logout 
     public function logout(Request $request)
     {
         try {
