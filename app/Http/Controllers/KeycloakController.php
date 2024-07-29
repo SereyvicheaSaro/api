@@ -4,57 +4,96 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use App\Models\Employee;
+use Illuminate\Support\Facades\Hash;
 
 class KeycloakController extends Controller
 {
-    // Define URL for the redirection.
-    private function getKeycloakUrl($endpoint)
-    {
-        // Url of api that will redirect.
-        return env('KEYCLOAK_SERVER') . '/realms/' . env('KEYCLOAK_REALM') . '/protocol/openid-connect/' . $endpoint;
-    }
 
-    // Define Params for the client.
-    private function getKeycloakParams($additionalParams = [])
-    {
-        return array_merge([
-            'client_id' => env('KEYCLOAK_CLIENT_ID'),
-            'client_secret' => env('KEYCLOAK_CLIENT_SECRET'),
-        ], $additionalParams);
-    }
-
+    // ================ login with keycloak
     public function login(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-        ]);
-
-        $params = array_merge(
-            $this->getKeycloakParams([
-                'grant_type' => 'password',
-                'username' => $request->input('email'),
-                'password' => $request->input('password'),
-            ])
-        );
-
         try {
-            // Redirect to Keycloak URL
+            $request->validate([
+                'email'     => 'required|email',
+                'password'  => 'required|string',
+            ]);
+
+            $params = array_merge(
+                $this->getKeycloakParams([
+                    'grant_type'    => 'password',
+                    'username'      => $request->input('email'),
+                    'password'      => $request->input('password'),
+                ])
+            );
+
+            // Request access token from Keycloak
             $response = Http::asForm()->post($this->getKeycloakUrl('token'), $params);
 
             if ($response->failed()) {
                 $status = $response->status();
                 $message = $status === 401 ? 'Invalid email or password' : 'Bad request';
-                return response()->json(['message' => $message], $status === 401 ? 400 : 400);
+                return response()->json(['message' => $message], $status);
             }
 
-            return response()->json(['tokenData' => $response->json()]);
+            // Get token data
+            $tokenData = $response->json();
+            $accessToken = $tokenData['access_token'];
+
+            $params = $this->getKeycloakParams([
+                'token' => $accessToken
+            ]);
+
+            // Fetch user info from Keycloak using the access token
+            $introspectionResponse = Http::asForm()->post($this->getKeycloakUrl('token/introspect'), $params);
+
+            if ($introspectionResponse->failed()) {
+                return response()->json(['message' => 'Failed to retrieve user info from Keycloak'], 500);
+            }
+
+            $userInfo = $introspectionResponse->json();
+
+            // Check if the token is active
+            if (!isset($userInfo['sub'])) {
+                return response()->json(['message' => 'Token is inactive or invalid'], 401);
+            }
+            
+            // Save User when first login
+            $email = $userInfo['email'];
+            $name = $userInfo['username'];
+            $roles = $userInfo['realm_access']['roles'] ?? [];
+            $firstRole = !empty($roles) ? $roles[0] : null;
+            $password = $request->input('password');
+            
+            // Check if user exists in employees table
+            $employee = Employee::where('email', $email)->first();
+
+            // Update or insert user record
+            if ($employee) {
+                $employee->update([  
+                    'name' => $name,
+                    'email' => $email,
+                    'role' => $firstRole,
+                    'password' => Hash::make($password),
+                ]);
+            } else {
+                $employee = Employee::create([
+                    'name' => $name,
+                    'email' => $email,
+                    'role' => $firstRole,
+                    'password' => Hash::make($password),
+                ]);
+            }
+
+            return response()->json(['tokenData' => $tokenData, 'user' => $employee]);
+
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Internal server error'], 500);
+            return response()->json(['message' => 'Internal server error: ' . $e->getMessage()], 500);
         }
     }
 
-    // Get all user
+
+    // ================ get all user in Kecloak
     public function getAllUsers(Request $request)
     {
         // Extract the Bearer token from the Authorization header
@@ -80,6 +119,7 @@ class KeycloakController extends Controller
         }
     }
 
+    // ================ take refresh_token to get access_token
     public function refresh(Request $request)
     {
         $request->validate([
@@ -108,7 +148,7 @@ class KeycloakController extends Controller
         }
     }
 
-    // Get user data
+    // ================ Get user data by keycloak
     public function introspect(Request $request)
     {
         $request->validate([
@@ -130,7 +170,7 @@ class KeycloakController extends Controller
         }
     }
 
-    // Logout 
+    // ================ Logout 
     public function logout(Request $request)
     {
         try {
