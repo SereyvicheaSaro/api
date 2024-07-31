@@ -4,6 +4,7 @@ use App\Http\Controllers\EmployeeController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\KeycloakController;
 use App\Http\Controllers\VehicleController;
+use App\Http\Controllers\VisitorController;
 use App\Http\Middleware\Authorization;
 use App\Http\Middleware\Authenticate;
 
@@ -35,8 +36,16 @@ Route::group([
 Route::group([
     'prefix' => 'employee',
 ],function(){
-    Route::get('/', [EmployeeController::class, 'getAll'])->middleware(Authenticate::class);
-    Route::get('/me', [EmployeeController::class, 'getMe']);
-    Route::patch('/{id}', [EmployeeController::class, 'update']);
-    
+    Route::get('/', [EmployeeController::class, 'getAll'])->middleware(Authenticate::class)->middleware(Authorization::class . ':admin');
+    Route::get('/me', [EmployeeController::class, 'getMe'])->middleware(Authenticate::class);
+    Route::post('/{id}', [EmployeeController::class, 'update'])->middleware(Authenticate::class);
+});
+
+Route::group([
+    'prefix' => 'visitor',
+],function(){
+    Route::post('/', [VisitorController::class, 'register']);
+    Route::get('/{id}', [VisitorController::class, 'show']);
+    Route::get('/', [VisitorController::class, 'getAllVisitor']);
+    Route::patch('/{id}', [VisitorController::class, 'update']);
 });

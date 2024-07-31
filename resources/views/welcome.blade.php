@@ -14,11 +14,11 @@
 
         <style>
             @keyframes vibrate {
-                0% { transform: translateX(0); }
+                0% { transform: translateX(1px); }
                 25% { transform: translateX(-0.1px); }
                 50% { transform: translateX(0.5px); }
                 75% { transform: translateX(-0.1px); }
-                100% { transform: translateX(0); }
+                100% { transform: translateX(1px); }
             }
     
             .vibrate {
@@ -27,8 +27,9 @@
         </style>
     </head>
     <body class="flex items-center justify-center min-h-screen bg-slate-900">
-        <div class="text-center p-8">
-            <h1 class="text-2xl font-bold text-white vibrate">API is running 💡</h1>
+        <div class="text-center p-8 flex justify-center items-center">
+            <p class="text-2xl font-bold text-white">API is running </p> 
+            <h1 class="vibrate text-2xl">💡</h1>
         </div>
     </body>
 </html>

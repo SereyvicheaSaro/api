@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Services\ImageUploadController;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -67,15 +68,22 @@ class EmployeeController extends Controller
         try {
             $validator = [
                 'name'          => 'sometimes|string',
-                'phoneNumber'   => 'sometimes|string',
-                'avatar'        => 'sometimes|string',
+                'contact'       => 'sometimes|string',
+                'avatar'        => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'bio'           => 'sometimes|string',
             ];
 
-            $req->validate($validator);
-
             $employee = Employee::findOrFail($id);
-            $employee->update($req->only(array_keys($validator)));
+            
+            // Handle image upload
+            if ($req->hasFile('avatar')) {
+                $avatar = ImageUploadController::storeImage($req->file('avatar'), 'uploads/avatar');
+            } else {
+                // Keep the existing avatar if not provided in the request
+                $avatar = $employee->avatar;
+            }
+    
+            $employee->update(array_merge($req->only(['name', 'contact', 'bio']), ['avatar' => $avatar]));
 
             return response()->json([
                 'message' => 'Update successful...',

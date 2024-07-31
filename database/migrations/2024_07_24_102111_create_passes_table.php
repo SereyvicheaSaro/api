@@ -17,7 +17,7 @@ class CreatePassesTable extends Migration
             $table->unsignedBigInteger('approved_by');
             $table->foreign('approved_by')->references('id')->on('employees');
 
-            $table->boolean('status');
+            // $table->boolean('status');
             $table->string('vehicle_plate');
 
             $table->timestamps();

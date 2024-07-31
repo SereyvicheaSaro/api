@@ -6,25 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
+
     public function up(): void
     {
         Schema::create('visitors', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->text('purpos');
+            $table->string('purpose');
             $table->string('contact');
             $table->time('entry_time');
             $table->time('exit_time');
+            
+            $table->unsignedBigInteger('approver_id');
+            $table->foreign('approver_id')->references('id')->on('employees');
+
+            $table->boolean('status');
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('visitors');

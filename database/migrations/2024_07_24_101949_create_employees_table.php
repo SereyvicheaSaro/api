@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('role');
             $table->string('contact')->nullable();
-            $table->string('avatar')->nullable();
+            $table->text('avatar')->nullable();
             $table->text('bio')->nullable();
             $table->timestamps();
         });

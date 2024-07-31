@@ -12,7 +12,9 @@ class Visitor extends Model
     protected $fillable = [
         'name',
         'contact',
-        'purpos',
+        'purpose',
+        'status',
+        'approver_id',
         'entry_time',
         'exit_time',
     ];
