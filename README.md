@@ -1,11 +1,20 @@
-## To Run The Project:
-```bash
-composer install && php -S localhost:8000 -t public
+# To Run The Project:
 
+1. Install dependencies:
 
-## LINK The Storage (Open as Powershell as Administrator):
+    ```bash
+    composer install
+    ```
 
-===== Equivalent to: php artisan storage:link
+2. Start the PHP built-in server:
 
-```bash
-New-Item -ItemType SymbolicLink -Path "path-to-project\public\storage" -Target "path-to-project\storage\app\public" 
+    ```bash
+    php -S localhost:8000 -t public
+    ```
+
+# Link the Storage (Open PowerShell as Administrator):
+
+**Equivalent to:** `php artisan storage:link`
+
+```powershell
+New-Item -ItemType SymbolicLink -Path "path-to-project\public\storage" -Target "path-to-project\storage\app\public"
