@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Visitor;
+use Illuminate\Support\Facades\Validator;
 
 class VisitorController extends Controller
 {
@@ -29,36 +30,43 @@ class VisitorController extends Controller
         return response()->json($visitor,201);
     }
 
-    public function getAllVisitor(){
+    public function getAllVisitor(Request $req){
+        $name = $req->input('name');
+        if ($name){
+            $visitors = Visitor::where('name', 'like', '%' . $name . '%')->get();
+            return response()->json($visitors, 200);
+        } 
         $visitors = Visitor::all();
-        return response()->json($visitors, 200);
+        return response()->json($visitors, 200); 
     }
 
     public function update(Request $req, $id)
     {
-        // Find the visitor record
+        // Find the visitor record or return a 404 response if not found
         $visitor = Visitor::findOrFail($id);
 
-        // Validate the request data
-        $req->validate([
+        // Define the validation rules
+        $rules = [
             'name'          => 'sometimes|string',
             'purpose'       => 'sometimes|string',
             'contact'       => 'sometimes|string',
             'entry_time'    => 'sometimes|date_format:H:i:s',
             'exit_time'     => 'sometimes|date_format:H:i:s',
-        ]);
+            'approver_id'   => 'sometimes|integer',
+            'status'        => 'sometimes|boolean',
+        ];
+
+        // Validate only the fields present in the request
+        $validatedData = $req->validate($rules);
 
         // Update the visitor record with the validated data
-        $visitor->update($req->only([
-            'name',
-            'purpose',
-            'contact',
-            'entry_time',
-            'exit_time',
-        ]));
+        $visitor->update($validatedData);
 
         // Return a successful response
-        return response()->json(['message' => 'Visitor updated successfully', 'visitor' => $visitor], 200);
+        return response()->json([
+            'message' => 'Visitor updated successfully',
+            'visitor' => $visitor
+        ], 200);
     }
 
     public function show($id)
@@ -67,4 +75,14 @@ class VisitorController extends Controller
         return response()->json(['visitor' => $visitor], 200);
     }
 
+    public function store(Request $request)
+    {
+        $id = $request->input('id');
+
+        // Process the ID or log it
+        // For example, you might want to log it or update the visitor status in your database
+
+        return response()->json(['message' => 'QR code data received', 'id' => $id]);
+    }
+    
 }

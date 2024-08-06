@@ -47,5 +47,7 @@ Route::group([
     Route::post('/', [VisitorController::class, 'register']);
     Route::get('/{id}', [VisitorController::class, 'show']);
     Route::get('/', [VisitorController::class, 'getAllVisitor']);
-    Route::patch('/{id}', [VisitorController::class, 'update']);
+    Route::post('/{id}', [VisitorController::class, 'update']);
+    Route::get('/search',[VisitorController::class, 'searchVisitor']);
+    Route::post('/scan-qr', [VisitorController::class, 'store']);
 });
