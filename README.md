@@ -1,4 +1,6 @@
-## LINK The Storage
-## Open as Powershell as Administrator: 
+## LINK The Storage (Open as Powershell as Administrator):
+
+``Equivalent to: php artisan storage:link``
+
 ```bash
 New-Item -ItemType SymbolicLink -Path "path-to-project\public\storage" -Target "path-to-project\storage\app\public" 
