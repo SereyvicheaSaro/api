@@ -19,9 +19,9 @@ class Employee extends Model
         'bio',
     ];
 
-    // public function passes()
-    // {
-    //     return $this->hasMany(Pass::class);
-    // }
+    public function passes()
+    {
+        return $this->hasMany(Pass::class);
+    }
     
 }

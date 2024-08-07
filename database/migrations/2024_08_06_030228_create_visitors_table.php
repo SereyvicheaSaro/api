@@ -16,11 +16,8 @@ return new class extends Migration
             $table->string('contact');
             $table->time('entry_time');
             $table->time('exit_time');
-            
-            $table->unsignedBigInteger('approver_id');
-            $table->foreign('approver_id')->references('id')->on('employees');
-
-            $table->boolean('status');
+            $table->string('approver')->nullable();
+            $table->enum('status', ['pending', 'approved', 'rejected']);
             $table->timestamps();
         });
     }

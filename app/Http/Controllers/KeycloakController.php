@@ -108,9 +108,18 @@ class KeycloakController extends Controller
     // ================ take refresh_token to get access_token
     public function refresh(Request $request)
     {
-        $request->validate([
+        // Define validation rules
+        $rules = [
             'refresh_token' => 'required|string',
-        ]);
+        ];
+
+        // Create a validator instance and validate the input
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            // Return validation errors
+            return response()->json(['message' => $validator->errors()->first()], 400);
+        }
 
         $params = array_merge(
             $this->getKeycloakParams([
@@ -134,12 +143,22 @@ class KeycloakController extends Controller
         }
     }
 
+
     // ================ Get user data by keycloak
     public function introspect(Request $request)
     {
-        $request->validate([
+        // Define validation rules
+        $rules = [
             'token' => 'required|string',
-        ]);
+        ];
+
+        // Create a validator instance and validate the input
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            // Return validation errors
+            return response()->json(['message' => $validator->errors()->first()], 400);
+        }
 
         $params = $this->getKeycloakParams(['token' => $request->input('token')]);
 

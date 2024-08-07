@@ -14,7 +14,7 @@ class Visitor extends Model
         'contact',
         'purpose',
         'status',
-        'approver_id',
+        'approver',
         'entry_time',
         'exit_time',
     ];
