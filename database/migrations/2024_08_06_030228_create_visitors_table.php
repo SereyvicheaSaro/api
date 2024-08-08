@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -12,10 +13,12 @@ return new class extends Migration
         Schema::create('visitors', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('purpose');
             $table->string('contact');
+            $table->string('purpose');
             $table->time('entry_time');
             $table->time('exit_time');
+            $table->integer('scan_count');
+            $table->date('date')->nullable();
             $table->string('approver')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected']);
             $table->timestamps();

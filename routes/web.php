@@ -35,6 +35,10 @@ $router->group(['prefix' => 'api/employee'], function () use ($router) {
 
 // ============= Visitor
 $router->group(['prefix' => 'api/visitor'], function () use ($router) {
+    $router->get('/visitor-stats', [
+        'uses'      => 'VisitorController@getVisitorStats',
+        'middleware'=> 'auth'
+    ]);
     $router->get('/', [
         'uses'      => 'VisitorController@getAllVisitor',
         'middleware'=> 'auth'

@@ -29,6 +29,11 @@ $app->withEloquent();
 
 $app->configure('services');
 
+use App\Models\Visitor;
+use App\Observers\VisitorObserver;
+
+Visitor::observe(VisitorObserver::class);
+
 /*
 |--------------------------------------------------------------------------
 | Register Container Bindings

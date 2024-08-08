@@ -17,16 +17,16 @@ class Pass extends Model
         'vehicle_plate',
     ];
 
-    public function visitors()
-    {
+    public function visitors() {
         return $this->belongsTo(Visitor::class);
     }
 
-    public function approver()
-    {
+    public function approver() {
         return $this->belongsTo(Employee::class);
     }
 
-
+    public function gate(){
+        return $this->belongsTo(Gate::class);
+    }
 
 }

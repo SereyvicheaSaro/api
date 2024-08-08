@@ -6,17 +6,15 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
-        Schema::create('logs', function (Blueprint $table) {
+        Schema::create('gates', function (Blueprint $table) {
             $table->id();
-
-            $table->unsignedBigInteger('visitor_id');
-            $table->foreign('visitor_id')->references('id')->on('visitors');
-            
-            $table->unsignedBigInteger('gate_id');
-            $table->foreign('gate_id')->references('id')->on('gates');
-
+            $table->string('code');
+            $table->string('location')->nullable();
             $table->timestamps();
         });
     }
@@ -26,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('logs');
+        Schema::dropIfExists('gates');
     }
 };

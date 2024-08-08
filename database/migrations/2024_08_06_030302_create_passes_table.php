@@ -14,12 +14,6 @@ class CreatePassesTable extends Migration
             $table->unsignedBigInteger('visitor_id');
             $table->foreign('visitor_id')->references('id')->on('visitors');
 
-            $table->unsignedBigInteger('approved_by');
-            $table->foreign('approved_by')->references('id')->on('employees');
-
-            // $table->boolean('status');
-            $table->string('vehicle_plate');
-
             $table->timestamps();
         });
     }

@@ -2,27 +2,42 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Services\VisitorService;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use App\Models\Visitor;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class VisitorController extends Controller
-{
+{   
+    protected $visitorService;
+
+    public function __construct(VisitorService $visitorService)
+    {
+        $this->visitorService = $visitorService;
+    }
+
     public function register(Request $req)
     {
+        // Validation
         $validator = Validator::make($req->all(), [
             'name'          => 'required|string|max:255',
             'purpose'       => 'required|string|max:255',
             'contact'       => 'required|string|max:255',
             'entry_time'    => 'required|date_format:H:i:s',
             'exit_time'     => 'required|date_format:H:i:s',
+            'date'          => 'nullable|date_format:Y-m-d',
         ]);
-
+        
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
+
+        // Default to current date if not provided
+        $date = $req->input('date', Carbon::now()->format('Y-m-d'));
 
         $visitor = Visitor::create([
             'name'          => $req->name,
@@ -30,31 +45,19 @@ class VisitorController extends Controller
             'contact'       => $req->contact,
             'entry_time'    => $req->entry_time,
             'exit_time'     => $req->exit_time,
+            'scan_count'    => 0,
             'approver'      => null,
             'status'        => 'pending',
+            'date'          => $date,
         ]);
 
         return response()->json($visitor, 201);
     }
 
-    public function getAllVisitor(Request $req)
-    {
-        $name = $req->input('name');
-        if ($name) {
-            $visitors = Visitor::where('name', 'like', '%' . $name . '%')->get();
-            return response()->json($visitors, 200);
-        } 
-
-        $visitors = Visitor::all();
-        return response()->json($visitors, 200); 
-    }
-
     public function update(Request $req, $id)
     {
-        // Find the visitor by ID or fail
         $visitor = Visitor::findOrFail($id);
 
-        // Validate the incoming request
         $validator = Validator::make($req->all(), [
             'name'          => 'sometimes|string|max:255',
             'purpose'       => 'sometimes|string|max:255',
@@ -62,6 +65,8 @@ class VisitorController extends Controller
             'entry_time'    => 'sometimes|date_format:H:i:s',
             'exit_time'     => 'sometimes|date_format:H:i:s|after:entry_time',
             'status'        => 'sometimes|in:pending,approved,rejected',
+            'scan_count'    => 'sometimes|integer',
+            'date'          => 'sometimes|date_format:D:m:y',
         ]);
 
         if ($validator->fails()) {
@@ -103,12 +108,21 @@ class VisitorController extends Controller
                 return response()->json(['message' => 'User not found'], 404);
             }
 
-            // Prepare data for update
             $validatedData = $validator->validated();
-            $validatedData['approver'] = $employee->name; // Set approver name
+            
+            if (isset($validatedData['status']) && $validatedData['status'] === 'approved') {
+                $validatedData['approver'] = $employee->name;
+            }
 
-            // Update visitor record
+            if ($visitor->scan_count >= 2) {
+                $visitor->status = 'rejected'; // Or 'pending' if that's the desired status
+                $visitor->save();
+            }
+
             $visitor->update($validatedData);
+
+            // Update status based on scan count
+            $this->visitorService->updateStatusBasedOnScanCount($visitor);
 
             return response()->json([
                 'message' => 'Visitor updated successfully',
@@ -119,20 +133,76 @@ class VisitorController extends Controller
         }
     }
 
-
-    public function show($id)
+    public function updateScanCount(Request $req, $id)
     {
         $visitor = Visitor::findOrFail($id);
-        return response()->json(['visitor' => $visitor], 200);
+
+        // Increment the scan_count
+        $visitor->increment('scan_count');
+
+        // Update the status based on scan_count
+        if ($visitor->scan_count >= 2) {
+            $visitor->status = 'rejected'; // Or 'pending' if that's the desired status
+            $visitor->save();
+        }
+
+        return response()->json([
+            'message' => 'Scan count updated successfully',
+            'visitor' => $visitor
+        ], 200);
     }
 
     public function store(Request $request)
     {
         $id = $request->input('id');
 
-        // Process the ID or log it
-        // For example, you might want to log it or update the visitor status in your database
+        $visitor = Visitor::findOrFail($id);
 
-        return response()->json(['message' => 'QR code data received', 'id' => $id]);
+        // Increment scan count
+        $visitor->increment('scan_count');
+
+        // Update status based on scan count
+        $this->visitorService->updateStatusBasedOnScanCount($visitor);
+
+        return response()->json(['message' => 'QR code data received', 'id' => $id, 'visitor' => $visitor]);
+    }
+
+    public function getAllVisitor(Request $req)
+    {
+        $query = Visitor::query();
+
+        if ($req->has('name')) {
+            $query->where('name', 'like', '%' . $req->input('name') . '%');
+        }
+
+        if ($req->has('status') && $req->input('status') !== 'all') {
+            $query->where('status', 'like', '%' . $req->input('status') . '%');
+        }
+
+        // Get the count of visitors that match the criteria
+        $totalCount = $query->count();
+
+        // Get the filtered visitors
+        $visitors = $query->get();
+
+        // Return both the count and the list of visitors
+        return response()->json([
+            'total_count' => $totalCount,
+            'visitors' => $visitors
+        ], 200);
+    }
+
+    public function getVisitorStats()
+    {
+        $visitorStats = Visitor::select('status', DB::raw('count(*) as count'))
+                                ->groupBy('status')
+                                ->get();
+        return response()->json($visitorStats);
+    }
+
+    public function show($id)
+    {
+        $visitor = Visitor::findOrFail($id);
+        return response()->json(['visitor' => $visitor], 200);
     }
 }

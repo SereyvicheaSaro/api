@@ -11,13 +11,15 @@ class Log extends Model
 
     protected $fillable = [
         'visitor_id',
-        'entry_time',
-        'exit_time',
+        'gate_id'
     ];
 
-    public function visitor()
-    {
+    public function visitor() {
         return $this->belongsTo(Visitor::class);
+    }
+
+    public function gate() {
+        return $this->hasMany(Gate::class);
     }
 
 }
