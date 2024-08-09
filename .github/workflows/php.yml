@@ -2,9 +2,9 @@ name: Lumen CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "lumen" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "lumen" ]
 
 permissions:
   contents: read
