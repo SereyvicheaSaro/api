@@ -35,13 +35,13 @@ $router->group(['prefix' => 'api/employee'], function () use ($router) {
 
 // ============= Visitor
 $router->group(['prefix' => 'api/visitor'], function () use ($router) {
-    $router->get('/visitor-stats', [
-        'uses'      => 'VisitorController@getVisitorStats',
+    $router->get('/visitor-status', [
+        'uses'      => 'VisitorController@getVisitorStatus',
         'middleware'=> 'auth'
     ]);
     $router->get('/', [
         'uses'      => 'VisitorController@getAllVisitor',
-        'middleware'=> 'auth'
+        'middleware'=> ['auth', 'role:admin']
     ]);
     $router->post('/', 'VisitorController@register');
     $router->get('/{id}', 'VisitorController@show');
@@ -49,5 +49,6 @@ $router->group(['prefix' => 'api/visitor'], function () use ($router) {
         'uses'      => 'VisitorController@update',
         'middleware'=> 'auth'
     ]);
+    $router->delete('/{id}', 'VisitorController@delete');
 });
 

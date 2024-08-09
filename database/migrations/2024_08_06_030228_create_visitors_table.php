@@ -21,6 +21,7 @@ return new class extends Migration
             $table->date('date')->nullable();
             $table->string('approver')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected']);
+            $table->string('qr_code')->nullable();
             $table->timestamps();
         });
     }
